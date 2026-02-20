@@ -93,9 +93,10 @@
             <h2 class="text-lg font-bold mb-4 text-primary border-b pb-2">合格证预览</h2>
             
             <div class="certificate mb-6" id="certificate">
+                <!-- 优化后的二维码布局 -->
                 <div class="flex flex-col sm:flex-row justify-between items-center mb-4">
                     <h2 class="text-xl font-bold text-primary mb-3 sm:mb-0">农产品质量安全承诺达标合格证</h2>
-                    <div id="qrcode" class="w-24 h-24"></div>
+                    <div id="qrcode" class="w-24 h-24 sm:w-24 sm:h-24 mt-3 sm:mt-0"></div>
                 </div>
                 
                 <table class="w-full border-collapse mb-4 text-sm">
@@ -137,7 +138,6 @@
             <!-- 公众号二维码提示区（默认隐藏） -->
             <div id="wechatSyncTip" class="hidden text-center mb-4">
                 <p class="text-sm text-gray-700 mb-2">请打开微信，扫码关注后粘贴复制的信息发送</p>
-                <!-- 这里是直接嵌入的纳科农品公众号二维码，不会再出现加载问题 -->
                 <img 
                     src="https://raw.githubusercontent.com/Ly918-cq/Ly918-cq2.github.io/main/wechat-qrcode.png.jpg"
                     class="w-40 h-40 mx-auto border border-gray-200 p-2 rounded-lg mb-2"
@@ -225,6 +225,7 @@
                 qrCodeInstance = new QRCode(qrcode, {
                     text: APP_CONFIG.wechatQueryUrl,
                     width: 96,
+                    height: 96,
                     colorDark: "#000000",
                     colorLight: "#ffffff",
                     correctLevel: QRCode.CorrectLevel.H
