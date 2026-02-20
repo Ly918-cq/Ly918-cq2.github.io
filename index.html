@@ -120,13 +120,13 @@
                 </div>
             </div>
 
-            <!-- 新增：复制编号按钮 -->
+            <!-- 复制编号按钮 -->
             <div class="text-center mb-4">
                 <p class="text-sm text-gray-600 mb-2">合格证编号：<span id="certIdText" class="font-bold text-primary"></span></p>
                 <button id="copyBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm">
                     <i class="fa-solid fa-copy mr-1"></i> 复制编号
                 </button>
-                <p class="text-xs text-gray-500 mt-1">扫码关注公众号，点击菜单"合格证查询"粘贴验证</p>
+                <p class="text-xs text-gray-500 mt-1">扫码打开查询页，粘贴编号验证</p>
             </div>
             
             <div class="flex flex-col sm:flex-row justify-center gap-3">
@@ -146,9 +146,8 @@
     <script>
         const APP_CONFIG = {
             certPrefix: 'NC',
-            // 【关键配置】替换为你的公众号主页链接！！！
-            // 获取方式：公众号后台 -> 设置 -> 公众号设置 -> 复制“微信号”或“公众号主页”链接
-            wechatHomeUrl: 'https://mp.weixin.qq.com/mp/profile_ext?action=home&__biz=wx607cc7e5407f659c&scene=123'
+            // 已替换为你的图文查询链接
+            wechatQueryUrl: 'https://mp.weixin.qq.com/s/ioWZPFuxKIQ0H8dJKcAK4A'
         };
 
         const certForm = document.getElementById('certForm');
@@ -189,15 +188,15 @@
                 });
                 document.getElementById('certIdText').textContent = currentCertId;
 
-                // 生成二维码：指向公众号主页
+                // 生成二维码：直接指向你的查询图文页
                 const qrcode = document.getElementById('qrcode');
                 qrcode.innerHTML = '';
                 qrCodeInstance = new QRCode(qrcode, {
-                    text: APP_CONFIG.wechatHomeUrl, // 扫码直接进公众号
+                    text: APP_CONFIG.wechatQueryUrl,
                     width: 96,
                     colorDark: "#000000",
                     colorLight: "#ffffff",
-                    correctLevel: QRCode.CorrectLevel.H
+                    correctLevel: QRCode.CorrectLevel.H // 最高容错率，扫码更稳定
                 });
 
                 formSection.classList.add('hidden');
@@ -215,7 +214,16 @@
         // 复制编号功能
         document.getElementById('copyBtn').addEventListener('click', () => {
             navigator.clipboard.writeText(currentCertId).then(() => {
-                alert('编号已复制，请前往公众号菜单查询！');
+                alert('编号已复制，请前往查询页粘贴验证！');
+            }).catch(() => {
+                // 兼容剪贴板权限不足的情况
+                const input = document.createElement('input');
+                input.value = currentCertId;
+                document.body.appendChild(input);
+                input.select();
+                document.execCommand('copy');
+                document.body.removeChild(input);
+                alert('编号已复制，请前往查询页粘贴验证！');
             });
         });
 
@@ -230,7 +238,7 @@
             const btn = document.getElementById('exportPdfBtn');
             btn.disabled = true; btn.innerHTML = '<span class="loading"></span>导出中...';
             setTimeout(() => {
-                html2canvas(certificate, { scale: 3 }).then(canvas => {
+                html2canvas(certificate, { scale: 3, useCORS: true }).then(canvas => {
                     const { jsPDF } = window.jspdf;
                     const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
                     const imgData = canvas.toDataURL('image/jpeg', 1.0);
@@ -248,7 +256,7 @@
             const btn = document.getElementById('exportJpgBtn');
             btn.disabled = true; btn.innerHTML = '<span class="loading"></span>导出中...';
             setTimeout(() => {
-                html2canvas(certificate, { scale: 3 }).then(canvas => {
+                html2canvas(certificate, { scale: 3, useCORS: true }).then(canvas => {
                     const link = document.createElement('a');
                     link.download = `合格证_${currentCertId}.jpg`;
                     link.href = canvas.toDataURL('image/jpeg', 0.95);
