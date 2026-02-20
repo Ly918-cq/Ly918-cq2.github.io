@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.bootcdn.net/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdn.bootcdn.net/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdn.bootcdn.net/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://unpkg.com/qrcodejs@1.0.0/qrcode.min.js"></script>
 
     <script>
         tailwind.config = {
@@ -120,13 +120,28 @@
                 </div>
             </div>
 
-            <!-- 复制编号按钮 -->
-            <div class="text-center mb-4">
-                <p class="text-sm text-gray-600 mb-2">合格证编号：<span id="certIdText" class="font-bold text-primary"></span></p>
-                <button id="copyBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm">
-                    <i class="fa-solid fa-copy mr-1"></i> 复制编号
-                </button>
-                <p class="text-xs text-gray-500 mt-1">扫码打开查询页，粘贴编号验证</p>
+            <!-- 新增：完整信息复制 + 同步到公众号 -->
+            <div class="bg-gray-50 p-4 rounded-lg mb-4">
+                <h3 class="text-sm font-medium text-primary mb-2">📌 同步信息到公众号（方便查询/统计）</h3>
+                <textarea id="fullCertInfo" class="w-full p-2 border border-gray-200 rounded-lg text-xs mb-2" rows="6" readonly></textarea>
+                <div class="flex gap-2 flex-wrap">
+                    <button id="copyFullInfoBtn" class="bg-primary/80 text-white px-4 py-2 rounded-lg text-sm">
+                        <i class="fa-solid fa-copy mr-1"></i> 复制完整信息
+                    </button>
+                    <button id="syncToWechatBtn" class="bg-secondary text-white px-4 py-2 rounded-lg text-sm">
+                        <i class="fa-brands fa-weixin mr-1"></i> 同步到公众号
+                    </button>
+                </div>
+            </div>
+
+            <!-- 公众号二维码提示区（默认隐藏） -->
+            <div id="wechatSyncTip" class="hidden text-center mb-4">
+                <p class="text-sm text-gray-700 mb-2">请打开微信，扫码关注后粘贴复制的信息发送</p>
+                <!-- 已替换为你的公众号二维码图片 -->
+                <img src="https://ly918-cq.github.io/Ly918-cq2.github.io/wechat-qrcode.png" 
+                     class="w-40 h-40 mx-auto border border-gray-200 p-2 rounded-lg mb-2" 
+                     alt="纳科农品公众号二维码">
+                <p class="text-xs text-red-500">发送后你会收到微信新消息提醒，可在后台导出数据</p>
             </div>
             
             <div class="flex flex-col sm:flex-row justify-center gap-3">
@@ -146,7 +161,7 @@
     <script>
         const APP_CONFIG = {
             certPrefix: 'NC',
-            // 已替换为你的图文查询链接
+            // 你的公众号查询图文链接
             wechatQueryUrl: 'https://mp.weixin.qq.com/s/ioWZPFuxKIQ0H8dJKcAK4A'
         };
 
@@ -154,8 +169,11 @@
         const formSection = document.getElementById('formSection');
         const previewSection = document.getElementById('previewSection');
         const certificate = document.getElementById('certificate');
+        const fullCertInfo = document.getElementById('fullCertInfo');
+        const wechatSyncTip = document.getElementById('wechatSyncTip');
         let qrCodeInstance = null;
         let currentCertId = '';
+        let currentCertData = {};
 
         // 表单提交
         certForm.addEventListener('submit', async (e) => {
@@ -166,37 +184,48 @@
             
             try {
                 currentCertId = APP_CONFIG.certPrefix + Date.now();
-                const formData = {
-                    operatorName: document.getElementById('operatorName').value,
-                    operatorType: document.getElementById('operatorType').value,
-                    operatorAddress: document.getElementById('operatorAddress').value,
-                    operatorPhone: document.getElementById('operatorPhone').value,
-                    productName: document.getElementById('productName').value,
-                    productVariety: document.getElementById('productVariety').value || '无',
-                    productQuantity: document.getElementById('productQuantity').value,
-                    produceDate: document.getElementById('produceDate').value ? new Date(document.getElementById('produceDate').value).toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' }) : '-',
-                    detectResult: document.getElementById('detectResult').value,
-                    promisorName: document.getElementById('promisorName').value,
-                    createTime: new Date().toLocaleString('zh-CN'),
-                    certId: currentCertId
+                currentCertData = {
+                    合格证编号: currentCertId,
+                    主体名称: document.getElementById('operatorName').value,
+                    主体类型: document.getElementById('operatorType').value,
+                    生产地址: document.getElementById('operatorAddress').value,
+                    联系电话: document.getElementById('operatorPhone').value,
+                    产品名称: document.getElementById('productName').value,
+                    品种: document.getElementById('productVariety').value || '无',
+                    数量: document.getElementById('productQuantity').value,
+                    日期: document.getElementById('produceDate').value ? new Date(document.getElementById('produceDate').value).toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' }) : '-',
+                    检测结果: document.getElementById('detectResult').value,
+                    承诺人: document.getElementById('promisorName').value,
+                    生成时间: new Date().toLocaleString('zh-CN')
                 };
 
                 // 填充预览
-                Object.keys(formData).forEach(key => {
-                    const el = document.getElementById('preview' + key.charAt(0).toUpperCase() + key.slice(1));
-                    if (el) el.textContent = formData[key];
+                Object.keys(currentCertData).forEach(key => {
+                    const previewKey = 'preview' + key.charAt(0).toUpperCase() + key.slice(1);
+                    const el = document.getElementById(previewKey);
+                    if (el) el.textContent = currentCertData[key];
                 });
-                document.getElementById('certIdText').textContent = currentCertId;
 
-                // 生成二维码：直接指向你的查询图文页
+                // 填充完整信息文本框
+                let infoText = '';
+                for (const [key, value] of Object.entries(currentCertData)) {
+                    infoText += `${key}：${value}\n`;
+                }
+                fullCertInfo.value = infoText;
+
+                // 生成二维码：指向查询图文页
                 const qrcode = document.getElementById('qrcode');
                 qrcode.innerHTML = '';
+                if (typeof QRCode === 'undefined') {
+                    alert('二维码库加载失败，请刷新页面重试');
+                    return;
+                }
                 qrCodeInstance = new QRCode(qrcode, {
                     text: APP_CONFIG.wechatQueryUrl,
                     width: 96,
                     colorDark: "#000000",
                     colorLight: "#ffffff",
-                    correctLevel: QRCode.CorrectLevel.H // 最高容错率，扫码更稳定
+                    correctLevel: QRCode.CorrectLevel.H
                 });
 
                 formSection.classList.add('hidden');
@@ -211,26 +240,28 @@
             }
         });
 
-        // 复制编号功能
-        document.getElementById('copyBtn').addEventListener('click', () => {
-            navigator.clipboard.writeText(currentCertId).then(() => {
-                alert('编号已复制，请前往查询页粘贴验证！');
-            }).catch(() => {
-                // 兼容剪贴板权限不足的情况
-                const input = document.createElement('input');
-                input.value = currentCertId;
-                document.body.appendChild(input);
-                input.select();
-                document.execCommand('copy');
-                document.body.removeChild(input);
-                alert('编号已复制，请前往查询页粘贴验证！');
-            });
+        // 复制完整信息
+        document.getElementById('copyFullInfoBtn').addEventListener('click', () => {
+            fullCertInfo.select();
+            document.execCommand('copy');
+            alert('完整信息已复制，请前往公众号粘贴发送！');
+        });
+
+        // 同步到公众号（显示提示）
+        document.getElementById('syncToWechatBtn').addEventListener('click', () => {
+            wechatSyncTip.classList.remove('hidden');
+            wechatSyncTip.scrollIntoView({ behavior: 'smooth' });
+            // 先复制信息
+            fullCertInfo.select();
+            document.execCommand('copy');
+            alert('信息已复制，扫码发送即可！');
         });
 
         // 返回按钮
         document.getElementById('backBtn').addEventListener('click', () => {
             previewSection.classList.add('hidden');
             formSection.classList.remove('hidden');
+            wechatSyncTip.classList.add('hidden');
         });
 
         // 导出PDF
