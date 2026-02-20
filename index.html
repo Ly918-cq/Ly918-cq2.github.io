@@ -348,14 +348,9 @@
                     margin: 1
                 });
                 
-                // 4. 提交数据到微信公众号（通过后端中转接口）
-                const submitResult = await submitToWechatAPI(formData);
-                if (submitResult.success) {
-                    console.log('数据已同步到微信公众号：', submitResult.data);
-                } else {
-                    alert('合格证生成成功，但数据同步到微信公众号失败，不影响使用！');
-                    console.error('微信公众号同步失败：', submitResult.msg);
-                }
+                // 临时跳过后端接口，二维码/导出功能正常使用
+console.log('合格证生成中，二维码/导出正常可用～');
+const submitResult = { success: true };
                 
                 // 5. 切换到预览区
                 formSection.classList.add('hidden');
