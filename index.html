@@ -11,7 +11,7 @@
     <!-- PDF/图片导出依赖（国内稳定CDN） -->
     <script src="https://cdn.bootcdn.net/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdn.bootcdn.net/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <!-- 二维码生成依赖（替换为稳定的qrcodejs） -->
+    <!-- 二维码生成依赖（稳定版） -->
     <script src="https://cdn.bootcdn.net/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
     <script>
@@ -403,17 +403,14 @@
                 document.getElementById('previewPromisorName').textContent = formData.promisorName;
                 document.getElementById('previewCreateTime').textContent = formData.createTime;
                 
-                // 4. 生成二维码（稳定版，替换异步调用）
+                // 4. 生成二维码（核心修复：精简内容，解决长度溢出）
                 const qrcode = document.getElementById('qrcode');
                 qrcode.innerHTML = '';
                 if (qrCodeInstance) {
                     qrCodeInstance.clear();
                 }
-                // 二维码内容（简洁格式，避免解析错误）
-                const qrContent = `合格证编号：${formData.certId}
-主体名称：${formData.operatorName}
-联系电话：${formData.operatorPhone}
-产品名称：${formData.productName}`;
+                // 极致精简的二维码内容（仅保留合格证编号，避免长度溢出）
+                const qrContent = formData.certId;
                 // 创建新二维码（最高容错率）
                 qrCodeInstance = new QRCode(qrcode, {
                     text: qrContent,
@@ -464,7 +461,7 @@
                 // 延迟执行，确保二维码渲染完成
                 setTimeout(() => {
                     // 转换HTML为canvas（提升分辨率）
-                    const canvas = html2canvas(certificate, {
+                    html2canvas(certificate, {
                         scale: APP_CONFIG.exportScale,
                         useCORS: true,
                         logging: false,
