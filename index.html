@@ -320,7 +320,14 @@
             certPrefix: 'NC', // 合格证编号前缀
             qrErrorLevel: 'H', // 二维码最高容错率
             exportScale: 3, // 导出分辨率缩放比（提升清晰度）
-            brand: '仂昭国际贸易（重庆）有限公司 纳科农品 | Natcropp'
+            brand: '仂昭国际贸易（重庆）有限公司 纳科农品 | Natcropp',
+            // 公众号配置（替换为你的公众号信息）
+            wechatConfig: {
+                // 公众号后台的AppID（替换成你的）
+                appId: 'wx607cc7e5407f659c',
+                // 公众号查询页链接（替换成你的）
+                queryUrl: 'https://mp.weixin.qq.com/mp/homepage'
+            }
         };
 
         // 全局变量
@@ -403,14 +410,14 @@
                 document.getElementById('previewPromisorName').textContent = formData.promisorName;
                 document.getElementById('previewCreateTime').textContent = formData.createTime;
                 
-                // 4. 生成二维码（核心修复：精简内容，解决长度溢出）
+                // 4. 生成二维码（核心优化：带公众号查询链接）
                 const qrcode = document.getElementById('qrcode');
                 qrcode.innerHTML = '';
                 if (qrCodeInstance) {
                     qrCodeInstance.clear();
                 }
-                // 极致精简的二维码内容（仅保留合格证编号，避免长度溢出）
-                const qrContent = formData.certId;
+                // 二维码内容：公众号查询链接 + 合格证编号（精简版，避免长度溢出）
+                const qrContent = `${APP_CONFIG.wechatConfig.queryUrl}?__biz=${APP_CONFIG.wechatConfig.appId}&cert=${formData.certId}`;
                 // 创建新二维码（最高容错率）
                 qrCodeInstance = new QRCode(qrcode, {
                     text: qrContent,
