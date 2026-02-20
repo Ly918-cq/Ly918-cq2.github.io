@@ -31,6 +31,20 @@
             .certificate { @apply w-full max-w-[600px] border-2 border-primary rounded-lg p-4 sm:p-6 mx-auto bg-white; }
             .loading { @apply inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2; }
         }
+
+        /* 强制限制二维码尺寸 */
+        #qrcode {
+            width: 96px !important;
+            height: 96px !important;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        #qrcode img {
+            width: 100% !important;
+            height: 100% !important;
+            object-fit: contain;
+        }
     </style>
 </head>
 <body class="bg-gray-50 min-h-screen">
@@ -93,10 +107,10 @@
             <h2 class="text-lg font-bold mb-4 text-primary border-b pb-2">合格证预览</h2>
             
             <div class="certificate mb-6" id="certificate">
-                <!-- 优化后的二维码布局 -->
-                <div class="flex flex-col sm:flex-row justify-between items-center mb-4">
-                    <h2 class="text-xl font-bold text-primary mb-3 sm:mb-0">农产品质量安全承诺达标合格证</h2>
-                    <div id="qrcode" class="w-24 h-24 sm:w-24 sm:h-24 mt-3 sm:mt-0"></div>
+                <!-- 优化后的布局：标题和二维码垂直排列 -->
+                <div class="flex flex-col items-center mb-4">
+                    <h2 class="text-xl font-bold text-primary mb-3">农产品质量安全承诺达标合格证</h2>
+                    <div id="qrcode" class="w-24 h-24"></div>
                 </div>
                 
                 <table class="w-full border-collapse mb-4 text-sm">
